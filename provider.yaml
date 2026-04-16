@@ -1,0 +1,32 @@
+meta:
+  name: quickwit
+  version: 0.1.0
+  description: Cross-span tracing checks against Quickwit. Use for transaction-flow completion, async-hop lag, and consumer-pool health invariants.
+  tags: [tracing, otel, quickwit, slo, async]
+  requires:
+    mgtt: ">=0.1.4"
+  command: "$MGTT_PROVIDER_DIR/bin/mgtt-provider-quickwit"
+
+hooks:
+  install: hooks/install.sh
+  uninstall: hooks/uninstall.sh
+
+variables:
+  quickwit_url:
+    description: base URL of the Quickwit search API (e.g. http://quickwit.observability.svc:7280)
+    required: true
+  index_id:
+    description: Quickwit index that holds OTEL trace docs (default `otel-traces-v0_7`)
+    required: false
+  auth_token:
+    description: bearer token for Quickwit when fronted by auth (optional)
+    required: false
+
+auth:
+  strategy: environment
+  reads_from:
+    - quickwit_url variable (model-side)
+    - auth_token variable (model-side; pass via secret)
+  access:
+    probes: quickwit HTTP read
+    writes: none
