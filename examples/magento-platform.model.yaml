@@ -77,12 +77,16 @@ components:
     depends_on: [rabbitmq]
 
   # ── Consumer pool health ────────────────────────────────────────────────
-  email_consumer_pool:
+  # Hops above answer "is the queue moving?". Pools answer "is the worker
+  # fleet alive, sized, and clean?" — surfacing workers_active, throughput,
+  # and error rate independently of queue depth. Spans below are deliberately
+  # ones no hop watches, to avoid duplicating signal.
+  catalog_alert_consumer_pool:
     type: tracing.consumer_health
     providers: [quickwit]
     vars:
       quickwit_url: "{quickwit_url}"
-      consumer_span: "queue.consume.sales_email_order_shipment"
+      consumer_span: "queue.consume.catalog_product_alert"
       service_name: "magento-consumer"
 
   bulk_ops_consumer_pool:
