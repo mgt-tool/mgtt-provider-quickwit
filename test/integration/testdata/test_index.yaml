@@ -1,0 +1,44 @@
+# Minimal Quickwit index for integration tests.
+# Field names match what the provider's probes query for: span_name,
+# service_name, span_status_code, span_duration_millis, timestamp.
+#
+# A production setup using Quickwit's standard `otel-traces-v0_7` index
+# would map equivalent fields — see README "OTEL ingest contract".
+
+version: 0.7
+index_id: traces-it
+doc_mapping:
+  mode: dynamic
+  field_mappings:
+    - name: timestamp
+      type: datetime
+      input_formats: [unix_timestamp]
+      output_format: unix_timestamp_secs
+      fast: true
+    - name: trace_id
+      type: text
+      tokenizer: raw
+    - name: span_id
+      type: text
+      tokenizer: raw
+    - name: span_name
+      type: text
+      tokenizer: raw
+      fast: true
+    - name: service_name
+      type: text
+      tokenizer: raw
+      fast: true
+    - name: span_status_code
+      type: i64
+      fast: true
+    - name: span_duration_millis
+      type: i64
+      fast: true
+  timestamp_field: timestamp
+
+indexing_settings:
+  commit_timeout_secs: 1
+
+search_settings:
+  default_search_fields: [span_name, service_name]

@@ -1,0 +1,69 @@
+facts:
+  processed_count_5m:
+    type: mgtt.int
+    ttl: 30s
+    description: "consumer spans ({consumer_span}) processed in the last 5 minutes"
+    probe:
+      cmd: "quickwit-cli search --span '{consumer_span}' --window 5m"
+      parse: int
+      cost: low
+  throughput_per_min:
+    type: mgtt.float
+    ttl: 30s
+    description: "processed_count_5m / 5 — convenient rate for SLOs"
+    probe:
+      cmd: "quickwit-cli throughput --span '{consumer_span}' --window 5m"
+      parse: float
+      cost: low
+  p99_processing_ms:
+    type: mgtt.float
+    ttl: 30s
+    description: "p99 of per-job processing time, in milliseconds"
+    probe:
+      cmd: "quickwit-cli percentile --span '{consumer_span}' --field span_duration_millis --percent 99"
+      parse: float
+      cost: medium
+  error_rate_5m:
+    type: mgtt.float
+    ttl: 30s
+    description: "fraction of consumer spans with status=ERROR (0.0–1.0)"
+    probe:
+      cmd: "quickwit-cli error-rate --span '{consumer_span}' --window 5m"
+      parse: float
+      cost: medium
+  workers_active:
+    type: mgtt.int
+    ttl: 60s
+    description: "distinct services emitting {consumer_span} in the window"
+    probe:
+      cmd: "quickwit-cli cardinality --span '{consumer_span}' --field service_name"
+      parse: int
+      cost: medium
+
+healthy:
+  - workers_active > 0
+  - error_rate_5m < 0.01
+
+states:
+  down:
+    when: "workers_active == 0"
+    description: no consumer instances seen in the window — pool is dead
+  starved:
+    when: "workers_active > 0 & processed_count_5m == 0"
+    description: workers up but doing no work — queue is empty or messages aren't reaching them
+  failing:
+    when: "error_rate_5m >= 0.05"
+    description: workers running but erroring on more than 5% of jobs
+  live:
+    when: "workers_active > 0 & error_rate_5m < 0.01 & processed_count_5m > 0"
+    description: pool healthy and processing
+
+default_active_state: live
+
+failure_modes:
+  down:
+    can_cause: [data_loss, downstream_starvation, slo_violation]
+  starved:
+    can_cause: [downstream_starvation]
+  failing:
+    can_cause: [data_loss, slo_violation]

@@ -1,0 +1,64 @@
+facts:
+  producer_count_5m:
+    type: mgtt.int
+    ttl: 30s
+    description: "publish-side spans ({producer_span}) in the last 5 minutes"
+    probe:
+      cmd: "quickwit-cli search --span '{producer_span}' --window 5m"
+      parse: int
+      cost: low
+  consumer_count_5m:
+    type: mgtt.int
+    ttl: 30s
+    description: "consume-side spans ({consumer_span}) in the last 5 minutes"
+    probe:
+      cmd: "quickwit-cli search --span '{consumer_span}' --window 5m"
+      parse: int
+      cost: low
+  success_rate_5m:
+    type: mgtt.float
+    ttl: 30s
+    description: "ratio of consumed to published in the last 5 minutes (0.0–1.0)"
+    probe:
+      cmd: "quickwit-cli hop-rate --producer '{producer_span}' --consumer '{consumer_span}' --window 5m"
+      parse: float
+      cost: low
+  consumer_error_rate_5m:
+    type: mgtt.float
+    ttl: 30s
+    description: "fraction of consume-side spans with status=ERROR (0.0–1.0)"
+    probe:
+      cmd: "quickwit-cli error-rate --span '{consumer_span}' --window 5m"
+      parse: float
+      cost: medium
+  p99_consumer_duration_ms:
+    type: mgtt.float
+    ttl: 30s
+    description: "p99 of consumer span duration, in milliseconds"
+    probe:
+      cmd: "quickwit-cli percentile --span '{consumer_span}' --field span_duration_millis --percent 99"
+      parse: float
+      cost: medium
+
+healthy:
+  - success_rate_5m >= 0.95
+  - consumer_error_rate_5m < 0.01
+
+states:
+  failing:
+    when: "consumer_error_rate_5m >= 0.05"
+    description: consumer side erroring on more than 5% of attempts
+  lagging:
+    when: "success_rate_5m < 0.95"
+    description: backlog growing — consumer not keeping pace with producer
+  live:
+    when: "success_rate_5m >= 0.95 & consumer_error_rate_5m < 0.01"
+    description: hop healthy
+
+default_active_state: live
+
+failure_modes:
+  failing:
+    can_cause: [data_loss, downstream_starvation]
+  lagging:
+    can_cause: [data_loss, downstream_starvation]

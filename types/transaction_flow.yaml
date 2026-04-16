@@ -1,0 +1,55 @@
+facts:
+  started_count_5m:
+    type: mgtt.int
+    ttl: 30s
+    description: "spans named {start_span} observed in the last 5 minutes"
+    probe:
+      cmd: "quickwit-cli search --span '{start_span}' --window 5m"
+      parse: int
+      cost: low
+  completed_count_5m:
+    type: mgtt.int
+    ttl: 30s
+    description: "spans named {end_span} observed in the last 5 minutes"
+    probe:
+      cmd: "quickwit-cli search --span '{end_span}' --window 5m"
+      parse: int
+      cost: low
+  completion_rate_5m:
+    type: mgtt.float
+    ttl: 30s
+    description: "ratio of completed to started in the last 5 minutes (0.0–1.0)"
+    probe:
+      cmd: "quickwit-cli flow-rate --start '{start_span}' --end '{end_span}' --window 5m"
+      parse: float
+      cost: low
+  p99_lag_ms:
+    type: mgtt.float
+    ttl: 30s
+    description: "p99 of the end-stage span duration, in milliseconds"
+    probe:
+      cmd: "quickwit-cli percentile --span '{end_span}' --field span_duration_millis --percent 99"
+      parse: float
+      cost: medium
+
+healthy:
+  - completion_rate_5m >= 0.95
+
+states:
+  broken:
+    when: "completion_rate_5m < 0.7"
+    description: fewer than 70% of started flows are reaching the terminal stage
+  degraded:
+    when: "completion_rate_5m >= 0.7 & completion_rate_5m < 0.95"
+    description: completion rate is below SLO band but flow is still moving
+  live:
+    when: "completion_rate_5m >= 0.95"
+    description: flow is healthy
+
+default_active_state: live
+
+failure_modes:
+  broken:
+    can_cause: [upstream_failure, slo_violation]
+  degraded:
+    can_cause: [upstream_failure, queue_lag]
