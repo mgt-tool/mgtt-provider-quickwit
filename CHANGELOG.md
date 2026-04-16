@@ -2,6 +2,17 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/).
 
+## [0.1.1] — 2026-04-16
+
+### Added
+
+- **`compatibility:` block in `provider.yaml`** — declares the backend versions this provider is built against (Quickwit `0.8.x`), the exact image digests the integration tests run against, and the version-sensitive behaviors callers should know about (`workers_active` falls back to `terms` agg in 0.8.x because no `cardinality` agg exists). Symmetric with mgtt-provider-tempo.
+- **README "Compatibility" section** — surfaces the same contract near the top of the page so operators see it before installing.
+
+### Changed
+
+- **Integration test image pinned by digest** — `quickwit/quickwit:0.8.2@sha256:363ff…0ef92`. Same lesson the tempo provider learned the hard way: the `:0.8.2` tag could be re-rolled with breaking aggregation-shape changes; the digest makes the test reproducible.
+
 ## [0.1.0] — 2026-04-16
 
 Initial release. Cross-span tracing checks against Quickwit's search API: business flows, queue hops, consumer pools.

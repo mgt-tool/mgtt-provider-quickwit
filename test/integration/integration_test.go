@@ -32,7 +32,9 @@ import (
 
 const (
 	containerName  = "mgtt-provider-quickwit-it"
-	quickwitImage  = "quickwit/quickwit:0.8.2"
+	// Pinned by digest. The same lesson the tempo provider learned the hard
+	// way: `:0.8.2` can be re-rolled with breaking aggregation-shape changes.
+	quickwitImage = "quickwit/quickwit:0.8.2@sha256:363ff56ce45614e46eba1c308e420f56a9f2fd8ab5788cbca0ec6b68a2e0ef92"
 	quickwitPort   = "7280"
 	quickwitIndex  = "traces-it"
 )
