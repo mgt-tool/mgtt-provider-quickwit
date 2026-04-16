@@ -1,6 +1,10 @@
-# A real Magento storefront — async business flows, queue hops, and consumer
-# pools wired up as Quickwit invariants alongside the queue and database
-# infrastructure they depend on.
+# A real Magento storefront, watched the way operators actually think about it.
+#
+# Three failure modes that single-span tools (Tempo, Jaeger, raw dashboards)
+# cannot see, but Quickwit's cross-span aggregations make trivial:
+#   • a flow that starts but never ends — orders without confirmation emails
+#   • a queue boundary that drops work — publishes without matching consumes
+#   • a worker fleet that quietly empties — consumers gone, queue silent
 #
 # Usage:
 #   export MGTT_MODEL=examples/magento-platform.model.yaml
@@ -16,7 +20,7 @@ meta:
     quickwit_url: http://quickwit.observability.svc:7280
 
 components:
-  # ── Backing infrastructure ──────────────────────────────────────────────
+  # ── The infrastructure every flow leans on ─────────────────────────────
   rabbitmq:
     type: aws.amazonmq_broker
     providers: [aws]
@@ -27,7 +31,11 @@ components:
     providers: [aws]
     vars: {identifier: magento-prod}
 
-  # ── Business flows: started in HTTP, completed by async consumer ────────
+  # ── Did the business outcome actually happen? ──────────────────────────
+  # Two spans bookend each flow: the request that opens the work, and the
+  # event that closes it. completion_rate = closes ÷ opens. When orders
+  # pile up and emails don't, mgtt walks downstream from here through
+  # rabbitmq → consumer pool → database to surface the cause.
   order_to_email_flow:
     type: tracing.transaction_flow
     providers: [quickwit]
@@ -46,7 +54,10 @@ components:
       end_span: "catalog.index.refresh.complete"
     depends_on: [rabbitmq, rds]
 
-  # ── Single-hop SLOs: one publish → one consume boundary ─────────────────
+  # ── Is the queue carrying its load? ────────────────────────────────────
+  # The smallest unit of "did the message survive the hop". Lagging
+  # publish-vs-consume counts mean backlog; consumer-side errors mean
+  # retries piling up. One component per topic of interest.
   shipment_email_hop:
     type: tracing.async_hop
     providers: [quickwit]
@@ -76,11 +87,11 @@ components:
       consumer_span: "queue.consume.media.storage.catalog.image.resize"
     depends_on: [rabbitmq]
 
-  # ── Consumer pool health ────────────────────────────────────────────────
-  # Hops above answer "is the queue moving?". Pools answer "is the worker
-  # fleet alive, sized, and clean?" — surfacing workers_active, throughput,
-  # and error rate independently of queue depth. Spans below are deliberately
-  # ones no hop watches, to avoid duplicating signal.
+  # ── Is the worker fleet alive? ─────────────────────────────────────────
+  # Hops watch the queue; pools watch the workers. Distinguishes "queue
+  # empty because nothing to do" from "queue empty because nobody home" —
+  # two states that look identical on a dashboard but have opposite fixes.
+  # Spans here are deliberately ones no hop covers, so the signal is fresh.
   catalog_alert_consumer_pool:
     type: tracing.consumer_health
     providers: [quickwit]
