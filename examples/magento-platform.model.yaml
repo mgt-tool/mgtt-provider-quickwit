@@ -20,8 +20,8 @@ meta:
   name: magento-storefront
   version: "1.0"
   providers:
-    - aws
-    - quickwit
+    - mgt-tool/aws
+    - mgt-tool/quickwit
   vars:
     quickwit_url: http://quickwit.observability.svc:7280
 
@@ -29,12 +29,12 @@ components:
   # ── The infrastructure every flow leans on ─────────────────────────────
   rabbitmq:
     type: aws.amazonmq_broker
-    providers: [aws]
+    providers: [mgt-tool/aws]
     vars: {identifier: magento-stage-mq}
 
   rds:
     type: aws.rds_instance
-    providers: [aws]
+    providers: [mgt-tool/aws]
     vars: {identifier: magento-prod}
 
   # ── Did the business outcome actually happen? ──────────────────────────
@@ -45,7 +45,7 @@ components:
   # Revenue path: 99% of placed orders must reach a confirmation email.
   order_to_email_flow:
     type: tracing.transaction_flow
-    providers: [quickwit]
+    providers: [mgt-tool/quickwit]
     vars:
       quickwit_url: "{quickwit_url}"
       start_span: "checkout.order.placed"
@@ -58,7 +58,7 @@ components:
   # importer can absorb a slow batch — looser SLO.
   catalog_import_to_searchable:
     type: tracing.transaction_flow
-    providers: [quickwit]
+    providers: [mgt-tool/quickwit]
     vars:
       quickwit_url: "{quickwit_url}"
       start_span: "admin.catalog.import.received"
@@ -75,7 +75,7 @@ components:
   # Customer-facing email: 99% delivered, < 1% errors.
   shipment_email_hop:
     type: tracing.async_hop
-    providers: [quickwit]
+    providers: [mgt-tool/quickwit]
     vars:
       quickwit_url: "{quickwit_url}"
       producer_span: "queue.publish.sales_email_order_shipment"
@@ -88,7 +88,7 @@ components:
   # Inventory truth: drops here cause oversells. Tighter than email.
   inventory_reservation_hop:
     type: tracing.async_hop
-    providers: [quickwit]
+    providers: [mgt-tool/quickwit]
     vars:
       quickwit_url: "{quickwit_url}"
       producer_span: "queue.publish.inventory.reservations.update"
@@ -101,7 +101,7 @@ components:
   # Best-effort: a missed thumbnail isn't a customer-visible event.
   image_resize_hop:
     type: tracing.async_hop
-    providers: [quickwit]
+    providers: [mgt-tool/quickwit]
     vars:
       quickwit_url: "{quickwit_url}"
       producer_span: "queue.publish.media.storage.catalog.image.resize"
@@ -118,7 +118,7 @@ components:
   # Two consumers expected; tolerate occasional alert-rule errors.
   catalog_alert_consumer_pool:
     type: tracing.consumer_health
-    providers: [quickwit]
+    providers: [mgt-tool/quickwit]
     vars:
       quickwit_url: "{quickwit_url}"
       consumer_span: "queue.consume.catalog_product_alert"
@@ -129,7 +129,7 @@ components:
   # Bulk ops fleet — must scale out on demand, must be impeccable when it does.
   bulk_ops_consumer_pool:
     type: tracing.consumer_health
-    providers: [quickwit]
+    providers: [mgt-tool/quickwit]
     vars:
       quickwit_url: "{quickwit_url}"
       consumer_span: "queue.consume.async.operations.all"
