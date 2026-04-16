@@ -41,19 +41,19 @@ facts:
       cost: medium
 
 healthy:
-  - success_rate_5m >= 0.95
-  - consumer_error_rate_5m < 0.01
+  - success_rate_5m >= target_success_rate
+  - consumer_error_rate_5m < target_max_error_rate
 
 states:
   failing:
-    when: "consumer_error_rate_5m >= 0.05"
-    description: consumer side erroring on more than 5% of attempts
+    when: "consumer_error_rate_5m >= target_max_error_rate"
+    description: consumer side erroring above the configured ceiling
   lagging:
-    when: "success_rate_5m < 0.95"
+    when: "success_rate_5m < target_success_rate"
     description: backlog growing — consumer not keeping pace with producer
   live:
-    when: "success_rate_5m >= 0.95 & consumer_error_rate_5m < 0.01"
-    description: hop healthy
+    when: "success_rate_5m >= target_success_rate & consumer_error_rate_5m < target_max_error_rate"
+    description: hop is meeting its SLO
 
 default_active_state: live
 

@@ -33,18 +33,18 @@ facts:
       cost: medium
 
 healthy:
-  - completion_rate_5m >= 0.95
+  - completion_rate_5m >= target_completion_rate
 
 states:
   broken:
-    when: "completion_rate_5m < 0.7"
-    description: fewer than 70% of started flows are reaching the terminal stage
+    when: "completion_rate_5m < broken_floor"
+    description: completion rate has fallen below the broken_floor — flow is failing
   degraded:
-    when: "completion_rate_5m >= 0.7 & completion_rate_5m < 0.95"
-    description: completion rate is below SLO band but flow is still moving
+    when: "completion_rate_5m >= broken_floor & completion_rate_5m < target_completion_rate"
+    description: completion rate below SLO target but above broken floor
   live:
-    when: "completion_rate_5m >= 0.95"
-    description: flow is healthy
+    when: "completion_rate_5m >= target_completion_rate"
+    description: flow is meeting its SLO
 
 default_active_state: live
 
