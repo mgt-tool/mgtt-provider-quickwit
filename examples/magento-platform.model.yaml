@@ -29,10 +29,6 @@ components:
     providers: [aws]
     vars: {identifier: magento-prod}
 
-  cron_singleton:
-    type: kubernetes.deployment
-    vars: {name: magento-cron, namespace: "{namespace}"}
-
   consumer_pool_blue:
     type: kubernetes.deployment
     vars: {name: magento-consumer-blue, namespace: "{namespace}"}
