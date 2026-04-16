@@ -41,22 +41,22 @@ facts:
       cost: medium
 
 healthy:
-  - workers_active > 0
-  - error_rate_5m < 0.01
+  - workers_active >= target_min_workers
+  - error_rate_5m < target_max_error_rate
 
 states:
   down:
-    when: "workers_active == 0"
-    description: no consumer instances seen in the window — pool is dead
+    when: "workers_active < target_min_workers"
+    description: pool below required headcount
   starved:
-    when: "workers_active > 0 & processed_count_5m == 0"
-    description: workers up but doing no work — queue is empty or messages aren't reaching them
+    when: "workers_active >= target_min_workers & processed_count_5m == 0"
+    description: workers up but doing no work — queue empty or messages not reaching them
   failing:
-    when: "error_rate_5m >= 0.05"
-    description: workers running but erroring on more than 5% of jobs
+    when: "error_rate_5m >= target_max_error_rate"
+    description: error rate above the configured ceiling
   live:
-    when: "workers_active > 0 & error_rate_5m < 0.01 & processed_count_5m > 0"
-    description: pool healthy and processing
+    when: "workers_active >= target_min_workers & error_rate_5m < target_max_error_rate & processed_count_5m > 0"
+    description: pool is meeting its SLO
 
 default_active_state: live
 

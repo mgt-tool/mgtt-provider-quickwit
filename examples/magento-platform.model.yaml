@@ -6,6 +6,12 @@
 #   • a queue boundary that drops work — publishes without matching consumes
 #   • a worker fleet that quietly empties — consumers gone, queue silent
 #
+# Each component below is a contract: facts the provider measures, plus the
+# numeric SLO the constraint engine evaluates `healthy` against. The targets
+# (e.g. target_completion_rate: 0.99) are component vars referenced by the
+# type manifest's `healthy:` and `states:` expressions — change them per
+# component to express how strict each scenario is.
+#
 # Usage:
 #   export MGTT_MODEL=examples/magento-platform.model.yaml
 #   mgtt plan --component order_to_email_flow
@@ -33,9 +39,10 @@ components:
 
   # ── Did the business outcome actually happen? ──────────────────────────
   # Two spans bookend each flow: the request that opens the work, and the
-  # event that closes it. completion_rate = closes ÷ opens. When orders
-  # pile up and emails don't, mgtt walks downstream from here through
-  # rabbitmq → consumer pool → database to surface the cause.
+  # event that closes it. completion_rate = closes ÷ opens. SLO = how many
+  # ÷ how many is acceptable.
+
+  # Revenue path: 99% of placed orders must reach a confirmation email.
   order_to_email_flow:
     type: tracing.transaction_flow
     providers: [quickwit]
@@ -43,8 +50,12 @@ components:
       quickwit_url: "{quickwit_url}"
       start_span: "checkout.order.placed"
       end_span: "email.order_confirmation.sent"
+      target_completion_rate: 0.99   # healthy when completion_rate_5m >= 0.99
+      broken_floor: 0.90             # broken when completion_rate_5m  < 0.90
     depends_on: [rabbitmq]
 
+  # Operational task: catalog imports must complete eventually, but the
+  # importer can absorb a slow batch — looser SLO.
   catalog_import_to_searchable:
     type: tracing.transaction_flow
     providers: [quickwit]
@@ -52,12 +63,16 @@ components:
       quickwit_url: "{quickwit_url}"
       start_span: "admin.catalog.import.received"
       end_span: "catalog.index.refresh.complete"
+      target_completion_rate: 0.95
+      broken_floor: 0.70
     depends_on: [rabbitmq, rds]
 
   # ── Is the queue carrying its load? ────────────────────────────────────
-  # The smallest unit of "did the message survive the hop". Lagging
-  # publish-vs-consume counts mean backlog; consumer-side errors mean
-  # retries piling up. One component per topic of interest.
+  # Smallest unit of "did the message survive the hop". target_success_rate
+  # is published÷consumed lower bound; target_max_error_rate caps how often
+  # the consumer is allowed to crash.
+
+  # Customer-facing email: 99% delivered, < 1% errors.
   shipment_email_hop:
     type: tracing.async_hop
     providers: [quickwit]
@@ -66,8 +81,11 @@ components:
       producer_span: "queue.publish.sales_email_order_shipment"
       consumer_span: "queue.consume.sales_email_order_shipment"
       service_name: "magento-consumer"
+      target_success_rate: 0.99
+      target_max_error_rate: 0.01
     depends_on: [rabbitmq]
 
+  # Inventory truth: drops here cause oversells. Tighter than email.
   inventory_reservation_hop:
     type: tracing.async_hop
     providers: [quickwit]
@@ -76,8 +94,11 @@ components:
       producer_span: "queue.publish.inventory.reservations.update"
       consumer_span: "queue.consume.inventory.reservations.update"
       service_name: "magento-consumer"
+      target_success_rate: 0.999
+      target_max_error_rate: 0.001
     depends_on: [rabbitmq, rds]
 
+  # Best-effort: a missed thumbnail isn't a customer-visible event.
   image_resize_hop:
     type: tracing.async_hop
     providers: [quickwit]
@@ -85,13 +106,16 @@ components:
       quickwit_url: "{quickwit_url}"
       producer_span: "queue.publish.media.storage.catalog.image.resize"
       consumer_span: "queue.consume.media.storage.catalog.image.resize"
+      target_success_rate: 0.90
+      target_max_error_rate: 0.05
     depends_on: [rabbitmq]
 
   # ── Is the worker fleet alive? ─────────────────────────────────────────
-  # Hops watch the queue; pools watch the workers. Distinguishes "queue
-  # empty because nothing to do" from "queue empty because nobody home" —
-  # two states that look identical on a dashboard but have opposite fixes.
-  # Spans here are deliberately ones no hop covers, so the signal is fresh.
+  # Hops watch the queue; pools watch the workers. target_min_workers tells
+  # the engine "below this headcount, you're degraded regardless of throughput"
+  # — distinguishes "queue empty, fleet idle" from "queue empty, fleet dead".
+
+  # Two consumers expected; tolerate occasional alert-rule errors.
   catalog_alert_consumer_pool:
     type: tracing.consumer_health
     providers: [quickwit]
@@ -99,7 +123,10 @@ components:
       quickwit_url: "{quickwit_url}"
       consumer_span: "queue.consume.catalog_product_alert"
       service_name: "magento-consumer"
+      target_min_workers: 2
+      target_max_error_rate: 0.02
 
+  # Bulk ops fleet — must scale out on demand, must be impeccable when it does.
   bulk_ops_consumer_pool:
     type: tracing.consumer_health
     providers: [quickwit]
@@ -107,4 +134,6 @@ components:
       quickwit_url: "{quickwit_url}"
       consumer_span: "queue.consume.async.operations.all"
       service_name: "magento-consumer"
+      target_min_workers: 1
+      target_max_error_rate: 0.005
     depends_on: [rds]
