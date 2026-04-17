@@ -26,9 +26,19 @@ Quickwit's aggregation surface is version-sensitive — `0.8.x` lacks a `cardina
 
 ## Install
 
+Two equivalent paths — pick whichever fits your workflow:
+
 ```bash
+# Git + host toolchain (requires Go 1.25+)
 mgtt provider install quickwit
+
+# Pre-built Docker image (no local toolchain, digest-pinned)
+mgtt provider install --image ghcr.io/mgt-tool/mgtt-provider-quickwit:0.1.1@sha256:...
 ```
+
+The image is published by [this repo's CI](./.github/workflows/docker.yml) on every push to `main` and every `v*` tag. Find the current digest on the [GHCR package page](https://github.com/mgt-tool/mgtt-provider-quickwit/pkgs/container/mgtt-provider-quickwit).
+
+Runtime: `image.needs: [network]` in `provider.yaml` — mgtt runs the image with `--network host` so the container can reach the Quickwit URL you set in `vars.quickwit_url`. Auth (when Quickwit is fronted by a proxy) is passed per-component via the `auth_token` var.
 
 ## Auth
 

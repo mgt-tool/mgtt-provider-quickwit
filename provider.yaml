@@ -43,3 +43,8 @@ auth:
   access:
     probes: quickwit HTTP read
     writes: none
+
+# Capabilities the image-installed form of this provider needs mgtt to
+# forward at probe time. See mgtt docs/reference/image-capabilities.md.
+image:
+  needs: [network]
