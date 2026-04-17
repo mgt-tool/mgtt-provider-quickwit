@@ -7,6 +7,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /out/provider .
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/provider /bin/provider
-COPY provider.yaml /provider.yaml
+COPY manifest.yaml /manifest.yaml
 COPY types /types
 ENTRYPOINT ["/bin/provider"]

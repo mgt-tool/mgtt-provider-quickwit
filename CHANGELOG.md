@@ -6,7 +6,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Added
 
-- **`compatibility:` block in `provider.yaml`** — declares the backend versions this provider is built against (Quickwit `0.8.x`), the exact image digests the integration tests run against, and the version-sensitive behaviors callers should know about (`workers_active` falls back to `terms` agg in 0.8.x because no `cardinality` agg exists). Symmetric with mgtt-provider-tempo.
+- **`compatibility:` block in `manifest.yaml`** — declares the backend versions this provider is built against (Quickwit `0.8.x`), the exact image digests the integration tests run against, and the version-sensitive behaviors callers should know about (`workers_active` falls back to `terms` agg in 0.8.x because no `cardinality` agg exists). Symmetric with mgtt-provider-tempo.
 - **README "Compatibility" section** — surfaces the same contract near the top of the page so operators see it before installing.
 
 ### Changed

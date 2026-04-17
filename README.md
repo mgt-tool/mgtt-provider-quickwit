@@ -22,7 +22,7 @@ When `mgtt plan` walks this component, the provider asks Quickwit: "of the order
 | **Versions** | `0.8.x` |
 | **Tested against** | `quickwit/quickwit:0.8.2` (digest pinned in integration tests) |
 
-Quickwit's aggregation surface is version-sensitive — `0.8.x` lacks a `cardinality` agg, so `workers_active` falls back to a `terms` agg (size: 200). Earlier or later Quickwit deployments may behave differently. See [`provider.yaml`](./provider.yaml#L19) for the full contract.
+Quickwit's aggregation surface is version-sensitive — `0.8.x` lacks a `cardinality` agg, so `workers_active` falls back to a `terms` agg (size: 200). Earlier or later Quickwit deployments may behave differently. See [`manifest.yaml`](./manifest.yaml#L19) for the full contract.
 
 ## Install
 
