@@ -7,12 +7,12 @@ meta:
     mgtt: ">=0.1.4"
   command: "$MGTT_PROVIDER_DIR/bin/mgtt-provider-quickwit"
 
-# Capabilities the provider needs at probe time. Image installs
-# satisfy these via docker-run bind mounts and env forwards; git
-# installs inherit them from the operator's shell.
+# Capabilities the provider needs at probe time — host packages
+# and credential chains. Image installs satisfy these via docker-run
+# bind mounts and env forwards; git installs inherit them from the
+# operator's shell. `network:` is a separate runtime-isolation knob.
 # See mgtt docs/reference/image-capabilities.md for the vocabulary.
-needs: [network]
-
+network: host
 # Backend version this provider is built against. Quickwit's aggregation
 # surface (no `cardinality` agg in 0.8.x — provider falls back to `terms`)
 # is version-sensitive; the contract here is a hard binding.
