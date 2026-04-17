@@ -38,7 +38,17 @@ mgtt provider install --image ghcr.io/mgt-tool/mgtt-provider-quickwit:0.1.1@sha2
 
 The image is published by [this repo's CI](./.github/workflows/docker.yml) on every push to `main` and every `v*` tag. Find the current digest on the [GHCR package page](https://github.com/mgt-tool/mgtt-provider-quickwit/pkgs/container/mgtt-provider-quickwit).
 
-Runtime: `image.needs: [network]` in `provider.yaml` — mgtt runs the image with `--network host` so the container can reach the Quickwit URL you set in `vars.quickwit_url`. Auth (when Quickwit is fronted by a proxy) is passed per-component via the `auth_token` var.
+## Capabilities
+
+When installed as an image, this provider declares the following runtime capabilities in [`provider.yaml`](./provider.yaml) (`image.needs`):
+
+| Capability | Effect at probe time |
+|---|---|
+| `network` | `--network host` — container reaches the Quickwit search URL you configure via `vars.quickwit_url` |
+
+No host credentials are forwarded; Quickwit auth (when fronted by a proxy) is passed per-component via the `auth_token` model var.
+
+Operators can override or extend the vocabulary via `$MGTT_HOME/capabilities.yaml`, and refuse specific caps via `MGTT_IMAGE_CAPS_DENY=...`. See the [full capabilities reference](https://github.com/mgt-tool/mgtt/blob/main/docs/reference/image-capabilities.md). Git-installed invocations don't go through this layer — the binary runs with the operator's full environment.
 
 ## Auth
 
