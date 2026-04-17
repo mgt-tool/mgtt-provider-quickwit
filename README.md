@@ -44,7 +44,7 @@ This provider declares **no `needs:` entries** — it talks only HTTP to the Qui
 
 No host credentials are forwarded; Quickwit auth (when fronted by a proxy) is passed per-component via the `auth_token` model var.
 
-Operators can override or extend the vocabulary via `$MGTT_HOME/capabilities.yaml`, and refuse specific caps via `MGTT_IMAGE_CAPS_DENY=...`. See the [full capabilities reference](https://github.com/mgt-tool/mgtt/blob/main/docs/reference/image-capabilities.md). Git-installed invocations don't go through this layer — the binary runs with the operator's full environment.
+See the [capability reference](https://github.com/mgt-tool/mgtt/blob/main/docs/reference/image-capabilities.md) for operator overrides and the `MGTT_IMAGE_CAPS_DENY` opt-out.
 
 ## Auth
 
