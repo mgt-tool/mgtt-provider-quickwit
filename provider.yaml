@@ -41,11 +41,3 @@ variables:
     description: bearer token for Quickwit when fronted by auth (optional)
     required: false
 
-auth:
-  strategy: environment
-  reads_from:
-    - quickwit_url variable (model-side)
-    - auth_token variable (model-side; pass via secret)
-  access:
-    probes: quickwit HTTP read
-    writes: none
