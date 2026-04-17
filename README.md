@@ -40,11 +40,7 @@ The image is published by [this repo's CI](./.github/workflows/docker.yml) on ev
 
 ## Capabilities
 
-When installed as an image, this provider declares the following runtime capabilities in [`provider.yaml`](./provider.yaml) (top-level `needs:`):
-
-| Capability | Effect at probe time |
-|---|---|
-| `network` | `--network host` — container reaches the Quickwit search URL you configure via `vars.quickwit_url` |
+This provider declares **no `needs:` entries** — it talks only HTTP to the Quickwit URL you configure in `vars.quickwit_url`. It does declare **`network: host`** so the container reaches in-cluster DNS (e.g. `quickwit.observability.svc:7280`) that bridge-mode containers can't resolve.
 
 No host credentials are forwarded; Quickwit auth (when fronted by a proxy) is passed per-component via the `auth_token` model var.
 
