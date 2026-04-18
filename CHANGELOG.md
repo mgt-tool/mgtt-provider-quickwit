@@ -2,6 +2,12 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/).
 
+## [1.0.1] — 2026-04-18
+
+### Changed
+
+- `manifest.yaml` backend range separator normalized from comma (`">=0.8.0,<0.9.0"`) to space (`">=0.8.0 <0.9.0"`) — matches the semver ecosystem convention used by npm, cargo, bundler, and the mgtt v1.0 schema spec example. Semantics unchanged.
+
 ## [1.0.0] — 2026-04-18
 
 ### Changed (breaking)

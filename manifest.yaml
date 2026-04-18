@@ -1,6 +1,6 @@
 meta:
   name: quickwit
-  version: 1.0.0
+  version: 1.0.1
   description: Cross-span tracing checks against Quickwit. Use for transaction-flow completion, async-hop lag, and consumer-pool health invariants.
   tags: [tracing, otel, quickwit, slo, async]
   requires:
@@ -17,7 +17,7 @@ meta:
 # is version-sensitive; the contract here is a hard binding.
 runtime:
   backends:
-    quickwit: ">=0.8.0,<0.9.0"
+    quickwit: ">=0.8.0 <0.9.0"
   network_mode: host
 
 install:
