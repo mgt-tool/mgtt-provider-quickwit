@@ -1,34 +1,31 @@
 meta:
   name: quickwit
-  version: 0.1.2
+  version: 1.0.0
   description: Cross-span tracing checks against Quickwit. Use for transaction-flow completion, async-hop lag, and consumer-pool health invariants.
   tags: [tracing, otel, quickwit, slo, async]
   requires:
-    mgtt: ">=0.1.4"
-  command: "$MGTT_PROVIDER_DIR/bin/mgtt-provider-quickwit"
+    mgtt: ">=0.2.0"
 
 # Capabilities the provider needs at probe time — host packages
 # and credential chains. Image installs satisfy these via docker-run
 # bind mounts and env forwards; git installs inherit them from the
-# operator's shell. `network:` is a separate runtime-isolation knob.
+# operator's shell. `network_mode:` is a separate runtime-isolation knob.
 # See mgtt docs/reference/image-capabilities.md for the vocabulary.
-network: host
+#
 # Backend version this provider is built against. Quickwit's aggregation
 # surface (no `cardinality` agg in 0.8.x — provider falls back to `terms`)
 # is version-sensitive; the contract here is a hard binding.
-compatibility:
-  backend: quickwit
-  versions: ">=0.8.0,<0.9.0"
-  tested_against:
-    - "quickwit/quickwit:0.8.2@sha256:363ff56ce45614e46eba1c308e420f56a9f2fd8ab5788cbca0ec6b68a2e0ef92"
-  notes: |
-    Quickwit 0.8.x lacks a `cardinality` aggregation. `workers_active` falls
-    back to a `terms` agg (size: 200), accurate up to ~200 distinct services
-    per pool. 0.9+ may add cardinality and change response shapes.
+runtime:
+  backends:
+    quickwit: ">=0.8.0,<0.9.0"
+  network_mode: host
 
-hooks:
-  install: hooks/install.sh
-  uninstall: hooks/uninstall.sh
+install:
+  source:
+    build: hooks/install.sh
+    clean: hooks/uninstall.sh
+  image:
+    repository: ghcr.io/mgt-tool/mgtt-provider-quickwit
 
 variables:
   quickwit_url:
@@ -40,4 +37,3 @@ variables:
   auth_token:
     description: bearer token for Quickwit when fronted by auth (optional)
     required: false
-
