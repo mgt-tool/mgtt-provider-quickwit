@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Alex Kunich
+// SPDX-License-Identifier: Apache-2.0
+
 // Package probes implements the quickwit-provider probe surface. All plumbing
 // (argv parsing, exit codes, status:not_found translation) lives in the SDK;
 // this package only constructs Quickwit search bodies and parses responses.

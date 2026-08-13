@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Alex Kunich
+// SPDX-License-Identifier: Apache-2.0
+
 // Package quickwitclient wraps Quickwit's search API with timeout, auth, and
 // the classify-to-sentinel-error mapping used by every quickwit-provider probe.
 package quickwitclient
