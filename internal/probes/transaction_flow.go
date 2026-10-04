@@ -22,8 +22,8 @@ import (
 //   - start_span (required): OTEL span name of the first observable stage
 //   - end_span (required):   OTEL span name of the terminal stage
 //   - service_name (optional): scopes both queries to one service
-func registerTransactionFlow(r *provider.Registry) {
-	r.Register("transaction_flow", map[string]provider.ProbeFn{
+func transactionFlowFacts() map[string]provider.ProbeFn {
+	return map[string]provider.ProbeFn{
 		"started_count_5m": func(ctx context.Context, req provider.Request) (provider.Result, error) {
 			c, q, err := flowStartQuery(req)
 			if err != nil {
@@ -86,7 +86,7 @@ func registerTransactionFlow(r *provider.Registry) {
 			}
 			return provider.FloatResult(v), nil
 		},
-	})
+	}
 }
 
 // flowStartQuery builds the query selecting the start-stage spans.

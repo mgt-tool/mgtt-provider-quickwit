@@ -17,8 +17,8 @@ import (
 // Variables:
 //   - consumer_span (required): OTEL span name emitted by each consumer per job
 //   - service_name (optional): scopes to one service pool
-func registerConsumerHealth(r *provider.Registry) {
-	r.Register("consumer_health", map[string]provider.ProbeFn{
+func consumerHealthFacts() map[string]provider.ProbeFn {
+	return map[string]provider.ProbeFn{
 		"processed_count_5m": func(ctx context.Context, req provider.Request) (provider.Result, error) {
 			c, q, err := consumerHealthQuery(req)
 			if err != nil {
@@ -104,7 +104,7 @@ func registerConsumerHealth(r *provider.Registry) {
 			}
 			return provider.IntResult(n), nil
 		},
-	})
+	}
 }
 
 func consumerHealthQuery(req provider.Request) (*quickwitclient.Client, string, error) {

@@ -20,8 +20,8 @@ import (
 //   - producer_span (required): OTEL span name on the publisher side
 //   - consumer_span (required): OTEL span name on the consumer side
 //   - service_name (optional): scopes consumer query to one service pool
-func registerAsyncHop(r *provider.Registry) {
-	r.Register("async_hop", map[string]provider.ProbeFn{
+func asyncHopFacts() map[string]provider.ProbeFn {
+	return map[string]provider.ProbeFn{
 		"producer_count_5m": func(ctx context.Context, req provider.Request) (provider.Result, error) {
 			c, q, err := producerQuery(req)
 			if err != nil {
@@ -104,7 +104,7 @@ func registerAsyncHop(r *provider.Registry) {
 			}
 			return provider.FloatResult(v), nil
 		},
-	})
+	}
 }
 
 func producerQuery(req provider.Request) (*quickwitclient.Client, string, error) {
