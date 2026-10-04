@@ -27,6 +27,10 @@ install:
   image:
     repository: ghcr.io/mgt-tool/mgtt-provider-quickwit
 
+# Thresholds the type expressions compare facts against
+# (`success_rate_5m >= target_success_rate`), set per component under vars:.
+# Declaring them is what lets `mgtt provider validate` tell them from
+# undeclared facts, and `mgtt model validate` warn when one is unset.
 variables:
   quickwit_url:
     description: base URL of the Quickwit search API (e.g. http://quickwit.observability.svc:7280)
@@ -37,3 +41,18 @@ variables:
   auth_token:
     description: bearer token for Quickwit when fronted by auth (optional)
     required: false
+  target_completion_rate:
+    description: transaction_flow is healthy at completion_rate_5m >= this (e.g. 0.99); set per component
+    required: true
+  broken_floor:
+    description: transaction_flow is broken below this completion_rate_5m (e.g. 0.90); set per component
+    required: true
+  target_success_rate:
+    description: async_hop is healthy at success_rate_5m >= this (e.g. 0.99); set per component
+    required: true
+  target_max_error_rate:
+    description: async_hop and consumer_health fail at an error rate >= this (e.g. 0.01); set per component
+    required: true
+  target_min_workers:
+    description: consumer_health needs at least this many workers_active; set per component
+    required: true
