@@ -123,9 +123,20 @@ func safeRatio(a, b float64) float64 {
 	return r
 }
 
+// types is this provider's vocabulary as it registers it: type name to the
+// probe for each fact. The SDK registry does not list what it holds (mgtt
+// 0.3.0 removed Registry.Types and Facts), so tests read the table here.
+func types() map[string]map[string]provider.ProbeFn {
+	return map[string]map[string]provider.ProbeFn{
+		"async_hop":        asyncHopFacts(),
+		"consumer_health":  consumerHealthFacts(),
+		"transaction_flow": transactionFlowFacts(),
+	}
+}
+
 // Register adds the quickwit provider's types to the registry.
 func Register(r *provider.Registry) {
-	registerTransactionFlow(r)
-	registerAsyncHop(r)
-	registerConsumerHealth(r)
+	for name, facts := range types() {
+		r.Register(name, facts)
+	}
 }

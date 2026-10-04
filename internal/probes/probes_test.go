@@ -270,7 +270,7 @@ func TestRegistryWiresAllTypes(t *testing.T) {
 		"consumer_health":  {"processed_count_5m", "throughput_per_min", "p99_processing_ms", "error_rate_5m", "workers_active"},
 	}
 	for typeName, facts := range wantFacts {
-		got := r.Facts(typeName)
+		got := factNames(types()[typeName])
 		gotSet := map[string]bool{}
 		for _, f := range got {
 			gotSet[f] = true
@@ -281,4 +281,13 @@ func TestRegistryWiresAllTypes(t *testing.T) {
 			}
 		}
 	}
+}
+
+// factNames lists the facts a type registers, from the provider's own table.
+func factNames(facts map[string]provider.ProbeFn) []string {
+	out := make([]string, 0, len(facts))
+	for name := range facts {
+		out = append(out, name)
+	}
+	return out
 }
